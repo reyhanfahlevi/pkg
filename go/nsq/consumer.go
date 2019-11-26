@@ -77,6 +77,37 @@ func (c *Consumer) Run() error {
 	return nil
 }
 
+// RunDirect will connecting all registered consumer handlers to the nsqlookupd address
+func (c *Consumer) RunDirect() error {
+	for _, h := range c.handlers {
+		cfg := nsq.NewConfig()
+		cfg.MaxAttempts = h.MaxAttempts
+		cfg.MaxInFlight = h.MaxInFlight
+		q, err := nsq.NewConsumer(h.Topic, h.Channel, cfg)
+		if err != nil {
+			return err
+		}
+
+		if h.Concurrent != 0 {
+			q.AddConcurrentHandlers(c.handle(h.Handler), h.Concurrent)
+		} else {
+			q.AddHandler(c.handle(h.Handler))
+		}
+
+		err = q.ConnectToNSQDs(c.listenAddress)
+		if err != nil {
+			return err
+		}
+
+		if err != nil {
+			return err
+		}
+		c.nsqConsumers = append(c.nsqConsumers, q)
+	}
+
+	return nil
+}
+
 // handle will convert the func(msg Message) error into nsq.HandlerFunc
 func (c *Consumer) handle(fn func(IMessage) error) nsq.HandlerFunc {
 	return func(message *nsq.Message) error {
