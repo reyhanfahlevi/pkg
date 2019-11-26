@@ -64,6 +64,9 @@ func (c *Consumer) Run() error {
 		}
 
 		err = q.ConnectToNSQLookupds(c.listenAddress)
+		if err != nil {
+			err = q.ConnectToNSQDs(c.listenAddress)
+		}
 
 		if err != nil {
 			return err
