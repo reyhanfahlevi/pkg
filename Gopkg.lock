@@ -17,9 +17,42 @@
   revision = "eee57a3ac4174c55924125bb15eeeda8cffb6e6f"
   version = "v1.0.7"
 
+[[projects]]
+  digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
+  version = "v0.8.1"
+
+[[projects]]
+  digest = "1:bef6d53f502eb5983a4cffda3600e9aa311fd4a0abf768344ab46df9248f856e"
+  name = "github.com/rs/zerolog"
+  packages = [
+    ".",
+    "internal/cbor",
+    "internal/json",
+  ]
+  pruneopts = "UT"
+  revision = "f1dd50b8c64d79be1392edf1d8fda5cedea4916d"
+  version = "v1.17.2"
+
+[[projects]]
+  branch = "master"
+  digest = "1:0d713d9b74892c4f5ef56de835ef41f4690e551f4f95d57b522ff060a8ca0e42"
+  name = "github.com/tokopedia/tdk"
+  packages = ["go/log/logger"]
+  pruneopts = "UT"
+  revision = "91c1e3daf9f150790f69350d55661b3295c14217"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  input-imports = ["github.com/nsqio/go-nsq"]
+  input-imports = [
+    "github.com/nsqio/go-nsq",
+    "github.com/pkg/errors",
+    "github.com/rs/zerolog",
+    "github.com/tokopedia/tdk/go/log/logger",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1
