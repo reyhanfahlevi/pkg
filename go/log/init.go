@@ -85,6 +85,20 @@ func SetLogger(level Level, lgr Logger) error {
 	return nil
 }
 
+// SetLevel adjusts log level threshold.
+// Only log with level higher or equal with this level will be printed
+func SetLevel(level Level) {
+	if level < 0 {
+		level = InfoLevel
+	}
+
+	debugLogger.SetLevel(logger.Level(level))
+	infoLogger.SetLevel(logger.Level(level))
+	warnLogger.SetLevel(logger.Level(level))
+	errLogger.SetLevel(logger.Level(level))
+	fatalLogger.SetLevel(logger.Level(level))
+}
+
 // SetConfig creates new default (info & debug) logger based on given config
 func SetConfig(config *Config) error {
 	var (
