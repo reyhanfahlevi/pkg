@@ -111,6 +111,8 @@ func newLogger(config Config) (zerolog.Logger, error) {
 
 	if config.AppName != "" {
 		lgr = zerolog.New(writers).With().Str("appname", config.AppName).Logger()
+	} else {
+		lgr = zerolog.New(writers)
 	}
 
 	lgr = setLevel(lgr, config.Level)
