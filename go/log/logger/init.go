@@ -3,7 +3,6 @@ package logger
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -138,24 +137,6 @@ func setLevel(lgr zerolog.Logger, level Level) zerolog.Logger {
 		lgr = lgr.Level(zerolog.InfoLevel)
 	}
 	return lgr
-}
-
-// StringToLevel to set string to level
-func StringToLevel(level string) Level {
-	switch strings.ToLower(level) {
-	case DebugLevelString:
-		return DebugLevel
-	case InfoLevelString:
-		return InfoLevel
-	case WarnLevelString:
-		return WarnLevel
-	case ErrorLevelString:
-		return ErrorLevel
-	case FatalLevelString:
-		return FatalLevel
-	default:
-		return InfoLevel
-	}
 }
 
 // OpenLogFile tries to open the log file (creates it if not exists) in write-only/append mode and return it

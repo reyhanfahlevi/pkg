@@ -9,7 +9,7 @@ import (
 // Config of log
 type Config struct {
 	// Level log level, default: debug
-	Level string
+	Level Level
 
 	// Format of the log's time field
 	// default RFC3339="2006-01-02T15:04:05Z07:00"
@@ -40,8 +40,8 @@ type Config struct {
 }
 
 var (
-	infoLogger, _  = NewLogger(&Config{Level: logger.InfoLevelString, UseColor: false})
-	debugLogger, _ = NewLogger(&Config{Level: logger.DebugLevelString, UseColor: false})
+	infoLogger, _  = NewLogger(&Config{Level: Level(logger.InfoLevel), UseColor: false})
+	debugLogger, _ = NewLogger(&Config{Level: Level(logger.DebugLevel), UseColor: false})
 	warnLogger     = infoLogger
 	errLogger      = infoLogger
 	fatalLogger    = infoLogger
@@ -58,7 +58,7 @@ var (
 // the return must be set using set logger to register it
 func NewLogger(config *Config) (Logger, error) {
 	l, err := logger.New(&logger.Config{
-		Level:      logger.StringToLevel(config.Level),
+		Level:      logger.Level(config.Level),
 		AppName:    config.AppName,
 		LogFile:    config.LogFile,
 		TimeFormat: config.TimeFormat,
@@ -97,7 +97,7 @@ func SetConfig(config *Config) error {
 
 	if config != nil {
 		loggerConfig = logger.Config{
-			Level:      logger.StringToLevel(config.Level),
+			Level:      logger.Level(config.Level),
 			AppName:    config.AppName,
 			LogFile:    config.LogFile,
 			TimeFormat: config.TimeFormat,
