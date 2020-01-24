@@ -1,4 +1,4 @@
-package rand
+package token
 
 import (
 	"testing"
