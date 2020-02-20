@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:0aebf53617269d8a34355839beaacbeea0d4d8ca8ead94cb443d5ab979e6a037"
+  name = "github.com/gocarina/gocsv"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "0b7418e775b86367743747aba610f2b23e3c03ad"
+
+[[projects]]
   digest = "1:e4f5819333ac698d294fe04dbf640f84719658d5c7ce195b10060cc37292ce79"
   name = "github.com/golang/snappy"
   packages = ["."]
@@ -41,6 +49,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/gocarina/gocsv",
     "github.com/nsqio/go-nsq",
     "github.com/rs/zerolog",
     "gopkg.in/yaml.v2",

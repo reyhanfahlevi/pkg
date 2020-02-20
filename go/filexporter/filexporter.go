@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gocarina/gocsv"
 	"gopkg.in/yaml.v2"
 )
 
@@ -19,6 +20,12 @@ func ExportJSON(data interface{}, path, fileName string) error {
 // ExportYaml is quick call to export the given data into yaml file
 func ExportYaml(data interface{}, path, fileName string) error {
 	return Export("yaml", data, path, fileName)
+}
+
+// ExportCSV is quick call to export the given data into csv file
+// data must be a slice of struct otherwise will error
+func ExportCSV(data interface{}, path, fileName string) error {
+	return Export("csv", data, path, fileName)
 }
 
 // Export will export the given data into specified file format, if not specified then it will
@@ -47,6 +54,15 @@ func Export(format string, data interface{}, path, fileName string) error {
 
 		if !strings.Contains(strings.ToLower(fileName), ".yaml") {
 			fileName = fmt.Sprintf("%s.yaml", fileName)
+		}
+	case "csv":
+		fileData, err = gocsv.MarshalBytes(data)
+		if err != nil {
+			return err
+		}
+
+		if !strings.Contains(strings.ToLower(fileName), ".csv") {
+			fileName = fmt.Sprintf("%s.csv", fileName)
 		}
 	default:
 		return Export("json", data, path, fileName)
