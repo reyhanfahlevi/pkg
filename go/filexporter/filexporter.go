@@ -31,7 +31,7 @@ func ExportYaml(data interface{}, path, fileName string) error {
 // ExportCSV is quick call to export the given data into csv file
 // data must be a slice of struct otherwise will error
 func ExportCSV(data interface{}, path, fileName string) error {
-	return Export(FormatJSON, data, path, fileName)
+	return Export(FormatCSV, data, path, fileName)
 }
 
 // Export will export the given data into specified file format, if not specified then it will

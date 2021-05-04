@@ -1,6 +1,14 @@
 package nsq
 
 import (
+	"context"
+	"log"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
+
 	"github.com/nsqio/go-nsq"
 )
 
@@ -11,12 +19,14 @@ type Consumer struct {
 
 	handlers     []ConsumerHandler
 	nsqConsumers []*nsq.Consumer
+	stopTimeout  time.Duration
 }
 
 // ConsumerConfig config for the consumer instance
 type ConsumerConfig struct {
 	ListenAddress []string
 	Prefix        string
+	StopTimeout   time.Duration
 }
 
 // ConsumerHandler handler for consumer
@@ -77,7 +87,7 @@ func (c *Consumer) Run() error {
 	return nil
 }
 
-// RunDirect will connecting all registered consumer handlers to the nsqlookupd address
+// RunDirect will connecting all registered consumer handlers directly to the nsqd address
 func (c *Consumer) RunDirect() error {
 	for _, h := range c.handlers {
 		cfg := nsq.NewConfig()
@@ -99,9 +109,6 @@ func (c *Consumer) RunDirect() error {
 			return err
 		}
 
-		if err != nil {
-			return err
-		}
 		c.nsqConsumers = append(c.nsqConsumers, q)
 	}
 
@@ -117,4 +124,54 @@ func (c *Consumer) handle(fn func(IMessage) error) nsq.HandlerFunc {
 
 		return fn(msg)
 	}
+}
+
+// Wait waits for the stop/restart signal and shutdown the NSQ consumers
+// gracefully
+func (c *Consumer) Wait() {
+	<-WaitTermSig(c.stop)
+}
+
+// stop the nsq consumers gracefully
+func (c *Consumer) stop(ctx context.Context) error {
+	var wg sync.WaitGroup
+	for _, con := range c.nsqConsumers {
+		wg.Add(1)
+		con := con
+		go func() { // use goroutines to stop all of them ASAP
+			defer wg.Done()
+			con.Stop()
+
+			select {
+			case <-con.StopChan:
+			case <-ctx.Done():
+			case <-time.After(c.stopTimeout):
+			}
+		}()
+	}
+	wg.Wait()
+	return nil
+}
+
+// WaitTermSig wait for termination signal
+func WaitTermSig(handler func(context.Context) error) <-chan struct{} {
+	stoppedCh := make(chan struct{})
+	go func() {
+		signals := make(chan os.Signal, 1)
+
+		// wait for the sigterm
+		signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+		<-signals
+
+		// We received an os signal, shut down.
+		if err := handler(context.Background()); err != nil {
+			log.Printf("graceful shutdown  fail: %v", err)
+		} else {
+			log.Println("gracefull shutdown success")
+		}
+
+		close(stoppedCh)
+
+	}()
+	return stoppedCh
 }
