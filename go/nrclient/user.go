@@ -269,6 +269,38 @@ func (nr *NRClient) UpdateUserAddOnRoles(ctx context.Context, nrAccountID int64,
 	return nil
 }
 
+// RemoveUserFromAccount remove user from nr account
+func (nr *NRClient) RemoveUserFromAccount(ctx context.Context, email string, nrAccountID int64) error {
+	user, err := nr.GetUserUnderAccount(ctx, email, nrAccountID)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("POST", fmt.Sprintf(updateUsers, nrAccountID, user.UserID), nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("cookie", fmt.Sprintf("login_service_login_newrelic_com_tokens=%s", nr.loginCookies))
+	req.Header.Add("content-type", "application/json")
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("x-requested-with", "XMLHttpRequest")
+
+	httpResp, err := nr.c.Do(req)
+	if err != nil {
+		return err
+	}
+	defer httpResp.Body.Close()
+
+	data, _ := ioutil.ReadAll(httpResp.Body)
+
+	if httpResp.StatusCode > 399 {
+		return fmt.Errorf("error code %v: %s", httpResp.StatusCode, userManagementError(data))
+	}
+
+	return nil
+}
+
 func userManagementError(jsonStr []byte) string {
 	resp := struct {
 		Error string `json:"error"`
