@@ -1,6 +1,7 @@
 package nrclient
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,11 +10,25 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
+)
+
+type BaseRole string
+type UserType int
+
+const (
+	UserTypeBasic UserType = 1
+	UserTypeFull  UserType = 0
+
+	UserBaseRoleAdmin      BaseRole = "admin"
+	UserBaseRoleUser       BaseRole = "user"
+	UserBaseRoleRestricted BaseRole = "restricted"
 )
 
 var (
 	ErrUserNotFound = errors.New("user not found")
+	validate        = validator.New()
 )
 
 // NRUser new relic user
@@ -39,6 +54,7 @@ type NRUserRoles struct {
 	DisplayName string      `json:"display_name"`
 	Type        string      `json:"type"`
 	BatchIds    []int       `json:"batch_ids"`
+	GrantCount  int         `json:"grant_count"`
 }
 
 // GetUserUnderAccount get user under specific account
@@ -135,6 +151,122 @@ func (nr *NRClient) FindUserAccount(ctx context.Context, email string) ([]NRUser
 	}
 
 	return users, nil
+}
+
+// ParamCreateUser struct
+type ParamCreateUser struct {
+	FullName   string `validate:"required"`
+	Email      string `validate:"required,email"`
+	AccountID  int64  `validate:"required"`
+	AddOnRoles []int64
+	UserType   UserType
+	BaseRole   BaseRole `validate:"required"`
+}
+
+// CreateUser create new user
+func (nr *NRClient) CreateUser(ctx context.Context, param ParamCreateUser) error {
+	var (
+		resp struct {
+			Success        bool   `json:"success"`
+			WelcomeMessage string `json:"welcome_message"`
+			UserID         int64  `json:"user_id"`
+		}
+	)
+
+	err := validate.Struct(param)
+	if err != nil {
+		return err.(validator.ValidationErrors)
+	}
+
+	body := map[string]interface{}{
+		"account_view": map[string]interface{}{
+			"user": map[string]interface{}{
+				"full_name": param.FullName,
+				"email":     param.Email,
+			},
+			"level":        param.BaseRole,
+			"user_tier_id": param.UserType,
+		},
+	}
+
+	rawBody, _ := json.Marshal(body)
+	req, err := http.NewRequest("POST", fmt.Sprintf(createUserUnderAccount, param.AccountID), bytes.NewBuffer(rawBody))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("cookie", fmt.Sprintf("login_service_login_newrelic_com_tokens=%s", nr.loginCookies))
+	req.Header.Add("content-type", "application/json")
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("x-requested-with", "XMLHttpRequest")
+
+	httpResp, err := nr.c.Do(req)
+	if err != nil {
+		return err
+	}
+	defer httpResp.Body.Close()
+
+	data, _ := ioutil.ReadAll(httpResp.Body)
+
+	if httpResp.StatusCode > 399 {
+		return fmt.Errorf("error code %v: %s", httpResp.StatusCode, userManagementError(data))
+	}
+
+	err = json.Unmarshal(data, &resp)
+	if err != nil {
+		return err
+	}
+
+	if len(param.AddOnRoles) > 0 {
+		return nr.UpdateUserAddOnRoles(ctx, param.AccountID, resp.UserID, param.AddOnRoles)
+	}
+
+	return nil
+}
+
+// UpdateUserAddOnRoles update user addons role
+func (nr *NRClient) UpdateUserAddOnRoles(ctx context.Context, nrAccountID int64, userID int64, roles []int64) error {
+	var (
+		resp struct {
+			Success        bool   `json:"success"`
+			WelcomeMessage string `json:"welcome_message"`
+			UserID         int64  `json:"user_id"`
+		}
+	)
+
+	body := map[string]interface{}{
+		"roles": roles,
+	}
+
+	rawBody, _ := json.Marshal(body)
+	req, err := http.NewRequest("PUT", fmt.Sprintf(updateUsers, nrAccountID, userID), bytes.NewBuffer(rawBody))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("cookie", fmt.Sprintf("login_service_login_newrelic_com_tokens=%s", nr.loginCookies))
+	req.Header.Add("content-type", "application/json")
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("x-requested-with", "XMLHttpRequest")
+
+	httpResp, err := nr.c.Do(req)
+	if err != nil {
+		return err
+	}
+	defer httpResp.Body.Close()
+
+	data, _ := ioutil.ReadAll(httpResp.Body)
+
+	if httpResp.StatusCode > 399 {
+		return fmt.Errorf("error code %v: %s", httpResp.StatusCode, userManagementError(data))
+	}
+
+	err = json.Unmarshal(data, &resp)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func userManagementError(jsonStr []byte) string {

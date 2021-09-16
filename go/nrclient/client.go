@@ -11,7 +11,11 @@ const (
 
 	getListOfUserUnderAccount = `https://user-management.service.newrelic.com/accounts/%v/users`
 
+	getListOfUserRoles = `https://user-management.service.newrelic.com/accounts/%v/roles`
+
 	createUserUnderAccount = `https://rpm.newrelic.com/user_management/accounts/%v/users/new`
+
+	updateUsers = `https://user-management.service.newrelic.com/accounts/%v/users/%v`
 )
 
 // Option nr client option

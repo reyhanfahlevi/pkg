@@ -3,6 +3,7 @@ module github.com/reyhanfahlevi/pkg
 go 1.14
 
 require (
+	github.com/go-playground/validator/v10 v10.9.0
 	github.com/gocarina/gocsv v0.0.0-20200212142550-0b7418e775b8
 	github.com/gojek/heimdall/v7 v7.0.2
 	github.com/golang/snappy v0.0.1 // indirect

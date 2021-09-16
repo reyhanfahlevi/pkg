@@ -66,6 +66,41 @@ func (nr *NRClient) GetAccountList(ctx context.Context) ([]NRAccount, error) {
 	return resp.Data.Actor.Accounts, err
 }
 
+// GetAddOnRoles get available addon roles under account
+func (nr *NRClient) GetAddOnRoles(ctx context.Context, nrAccountID int64) ([]NRUserRoles, error) {
+	var (
+		roles []NRUserRoles
+	)
+
+	req, err := http.NewRequest("GET", fmt.Sprintf(getListOfUserRoles, nrAccountID), nil)
+	if err != nil {
+		return roles, err
+	}
+
+	req.Header.Add("cookie", fmt.Sprintf("login_service_login_newrelic_com_tokens=%s", nr.loginCookies))
+	req.Header.Add("content-type", "application/json")
+	req.Header.Add("accept", "application/json")
+
+	httpResp, err := nr.c.Do(req)
+	if err != nil {
+		return roles, err
+	}
+	defer httpResp.Body.Close()
+
+	data, _ := ioutil.ReadAll(httpResp.Body)
+
+	if httpResp.StatusCode > 399 {
+		return roles, fmt.Errorf("error code %v: %s", httpResp.StatusCode, userManagementError(data))
+	}
+
+	err = json.Unmarshal(data, &roles)
+	if err != nil {
+		return roles, err
+	}
+
+	return []NRUserRoles{}, nil
+}
+
 type errResp struct {
 	Errors []struct {
 		Message string `json:"message"`
