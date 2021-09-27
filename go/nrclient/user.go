@@ -301,6 +301,36 @@ func (nr *NRClient) RemoveUserFromAccount(ctx context.Context, email string, nrA
 	return nil
 }
 
+// BulkCreateUserSummary struct
+type BulkCreateUserSummary struct {
+	Data    ParamCreateUser
+	Success bool
+	Err     error
+}
+
+// BulkCreateUser create new user in bulk
+func (nr *NRClient) BulkCreateUser(ctx context.Context, data ...ParamCreateUser) []BulkCreateUserSummary {
+	var (
+		summary []BulkCreateUserSummary
+	)
+	for _, d := range data {
+		tmp := BulkCreateUserSummary{
+			Data:    d,
+			Success: true,
+		}
+
+		err := nr.CreateUser(ctx, d)
+		if err != nil {
+			tmp.Err = err
+			tmp.Success = false
+		}
+
+		summary = append(summary, tmp)
+	}
+
+	return summary
+}
+
 func userManagementError(jsonStr []byte) string {
 	resp := struct {
 		Error string `json:"error"`
