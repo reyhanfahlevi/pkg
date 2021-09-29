@@ -65,7 +65,7 @@ func (nr *NRClient) GetUserUnderAccount(ctx context.Context, email string, nrAcc
 		user = NRUser{}
 	)
 
-	req, err := http.NewRequest("GET", fmt.Sprintf(getListOfUserUnderAccount, nrAccountID), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(getListOfUserUnderAccount, nrAccountID), nil)
 	if err != nil {
 		return user, err
 	}
@@ -190,7 +190,7 @@ func (nr *NRClient) CreateUser(ctx context.Context, param ParamCreateUser) error
 	}
 
 	rawBody, _ := json.Marshal(body)
-	req, err := http.NewRequest("POST", fmt.Sprintf(createUserUnderAccount, param.AccountID), bytes.NewBuffer(rawBody))
+	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf(createUserUnderAccount, param.AccountID), bytes.NewBuffer(rawBody))
 	if err != nil {
 		return err
 	}
@@ -226,27 +226,18 @@ func (nr *NRClient) CreateUser(ctx context.Context, param ParamCreateUser) error
 
 // UpdateUserAddOnRoles update user addons role
 func (nr *NRClient) UpdateUserAddOnRoles(ctx context.Context, nrAccountID int64, userID int64, roles []int64) error {
-	var (
-		resp struct {
-			Success        bool   `json:"success"`
-			WelcomeMessage string `json:"welcome_message"`
-			UserID         int64  `json:"user_id"`
-		}
-	)
-
 	body := map[string]interface{}{
 		"roles": roles,
 	}
 
 	rawBody, _ := json.Marshal(body)
-	req, err := http.NewRequest("PUT", fmt.Sprintf(updateUsers, nrAccountID, userID), bytes.NewBuffer(rawBody))
+	req, err := http.NewRequestWithContext(ctx, "PUT", fmt.Sprintf(updateUsers, nrAccountID, userID), bytes.NewBuffer(rawBody))
 	if err != nil {
 		return err
 	}
 
 	req.Header.Add("cookie", fmt.Sprintf("login_service_login_newrelic_com_tokens=%s", nr.loginCookies))
 	req.Header.Add("content-type", "application/json")
-	req.Header.Add("accept", "application/json")
 	req.Header.Add("x-requested-with", "XMLHttpRequest")
 
 	httpResp, err := nr.c.Do(req)
@@ -261,11 +252,6 @@ func (nr *NRClient) UpdateUserAddOnRoles(ctx context.Context, nrAccountID int64,
 		return fmt.Errorf("error code %v: %s", httpResp.StatusCode, userManagementError(data))
 	}
 
-	err = json.Unmarshal(data, &resp)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -276,7 +262,7 @@ func (nr *NRClient) RemoveUserFromAccount(ctx context.Context, email string, nrA
 		return err
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf(updateUsers, nrAccountID, user.UserID), nil)
+	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf(updateUsers, nrAccountID, user.UserID), nil)
 	if err != nil {
 		return err
 	}

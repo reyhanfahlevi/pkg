@@ -15,16 +15,18 @@ type NRAccount struct {
 	Name string `json:"name"`
 }
 
+type gqlGetAccountResp struct {
+	Data struct {
+		Actor struct {
+			Accounts []NRAccount `json:"accounts"`
+		} `json:"actor"`
+	} `json:"data"`
+}
+
 // GetAccountList get all available nr accounts
 func (nr *NRClient) GetAccountList(ctx context.Context) ([]NRAccount, error) {
 	var (
-		resp = struct {
-			Data struct {
-				Actor struct {
-					Accounts []NRAccount `json:"accounts"`
-				} `json:"actor"`
-			} `json:"data"`
-		}{}
+		resp = gqlGetAccountResp{}
 	)
 
 	body := map[string]interface{}{
@@ -39,9 +41,9 @@ func (nr *NRClient) GetAccountList(ctx context.Context) ([]NRAccount, error) {
 	}
 
 	rawBody, _ := json.Marshal(body)
-	req, err := http.NewRequest("POST", graphqlURL, bytes.NewBuffer(rawBody))
+	req, err := http.NewRequestWithContext(ctx, "POST", graphqlURL, bytes.NewBuffer(rawBody))
 	if err != nil {
-		return resp.Data.Actor.Accounts, err
+		return []NRAccount{}, err
 	}
 
 	req.Header.Add("api-key", nr.apiKey)
@@ -49,18 +51,18 @@ func (nr *NRClient) GetAccountList(ctx context.Context) ([]NRAccount, error) {
 
 	httpResp, err := nr.c.Do(req)
 	if err != nil {
-		return resp.Data.Actor.Accounts, err
+		return []NRAccount{}, err
 	}
 	defer httpResp.Body.Close()
 
 	data, _ := ioutil.ReadAll(httpResp.Body)
 	err = json.Unmarshal(data, &resp)
 	if err != nil {
-		return resp.Data.Actor.Accounts, err
+		return []NRAccount{}, err
 	}
 
 	if httpResp.StatusCode > 399 {
-		return resp.Data.Actor.Accounts, fmt.Errorf("error code %v: %s", httpResp.StatusCode, graphqlError(data))
+		return []NRAccount{}, fmt.Errorf("error code %v: %s", httpResp.StatusCode, graphqlError(data))
 	}
 
 	return resp.Data.Actor.Accounts, err
@@ -69,10 +71,10 @@ func (nr *NRClient) GetAccountList(ctx context.Context) ([]NRAccount, error) {
 // GetAddOnRoles get available addon roles under account
 func (nr *NRClient) GetAddOnRoles(ctx context.Context, nrAccountID int64) ([]NRUserRoles, error) {
 	var (
-		roles []NRUserRoles
+		roles = []NRUserRoles{}
 	)
 
-	req, err := http.NewRequest("GET", fmt.Sprintf(getListOfUserRoles, nrAccountID), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(getListOfUserRoles, nrAccountID), nil)
 	if err != nil {
 		return roles, err
 	}
@@ -98,7 +100,7 @@ func (nr *NRClient) GetAddOnRoles(ctx context.Context, nrAccountID int64) ([]NRU
 		return roles, err
 	}
 
-	return []NRUserRoles{}, nil
+	return roles, nil
 }
 
 type errResp struct {

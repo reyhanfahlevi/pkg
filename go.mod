@@ -10,5 +10,6 @@ require (
 	github.com/nsqio/go-nsq v1.0.7
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.17.2
+	gopkg.in/h2non/gock.v1 v1.1.2
 	gopkg.in/yaml.v2 v2.2.7
 )
