@@ -289,9 +289,9 @@ func (nr *NRClient) RemoveUserFromAccount(ctx context.Context, email string, nrA
 
 // BulkCreateUserSummary struct
 type BulkCreateUserSummary struct {
-	Data    ParamCreateUser
-	Success bool
-	Err     error
+	Data    ParamCreateUser `json:"data"`
+	Success bool            `json:"success"`
+	Err     error           `json:"err"`
 }
 
 // BulkCreateUser create new user in bulk
