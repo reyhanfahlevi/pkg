@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/ennobelprakoso/pkg/go/log"
 	"github.com/gin-gonic/gin"
 	"github.com/newrelic/go-agent/v3/integrations/nrlogrus"
 	"github.com/newrelic/go-agent/v3/newrelic"
-	"github.com/reyhanfahlevi/pkg/go/log"
 	"github.com/sirupsen/logrus"
 )
 

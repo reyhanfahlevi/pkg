@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 
-	"github.com/reyhanfahlevi/pkg/go/log"
-	"github.com/reyhanfahlevi/pkg/go/nrclient"
+	"github.com/ennobelprakoso/pkg/go/log"
+	"github.com/ennobelprakoso/pkg/go/nrclient"
 )
 
 func main() {

@@ -5,8 +5,8 @@ package tracer
 import (
 	"context"
 
+	"github.com/ennobelprakoso/pkg/go/tracer/nr"
 	"github.com/gin-gonic/gin"
-	"github.com/reyhanfahlevi/pkg/go/tracer/nr"
 )
 
 // StartTransaction will create new nr transaction

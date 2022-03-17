@@ -1,7 +1,7 @@
 package log
 
 import (
-	"github.com/reyhanfahlevi/pkg/go/log/logger"
+	"github.com/ennobelprakoso/pkg/go/log/logger"
 )
 
 // Level logger

@@ -3,7 +3,7 @@ package tracer
 import (
 	"strings"
 
-	"github.com/reyhanfahlevi/pkg/go/tracer/nr"
+	"github.com/ennobelprakoso/pkg/go/tracer/nr"
 )
 
 // Init to initialize tracing package

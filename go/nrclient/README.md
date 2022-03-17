@@ -3,7 +3,7 @@
 A custom package to aggregate newrelic API.
 
 ```go
-import "github.com/reyhanfahlevi/pkg/go/nrclient"
+import "github.com/ennobelprakoso/pkg/go/nrclient"
 
 nr := nrclient.New(nrclient.Option{
     NRLoginCookies: `login cookies`,

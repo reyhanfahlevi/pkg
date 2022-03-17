@@ -1,4 +1,4 @@
-module github.com/reyhanfahlevi/pkg
+module github.com/ennobelprakoso/pkg
 
 go 1.14
 

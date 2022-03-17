@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/reyhanfahlevi/pkg/go/tracer/nr"
+	"github.com/ennobelprakoso/pkg/go/tracer/nr"
 )
 
 // Config config
