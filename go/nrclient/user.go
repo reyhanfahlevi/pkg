@@ -262,7 +262,7 @@ func (nr *NRClient) RemoveUserFromAccount(ctx context.Context, email string, nrA
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "DELETE", fmt.Sprintf(updateUsers, nrAccountID, user.UserID), nil)
+	req, err := http.NewRequestWithContext(ctx, "DELETE", fmt.Sprintf(DeleteUsers, nrAccountID, user.UserID), nil)
 	if err != nil {
 		return err
 	}
