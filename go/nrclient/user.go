@@ -57,6 +57,40 @@ type NRUserRoles struct {
 	GrantCount  int         `json:"grant_count"`
 }
 
+func (nr *NRClient) GetAllUserUnderAccount(ctx context.Context, nrAccountID int64) ([]NRUser, error) {
+	var (
+		resp = []NRUser{}
+	)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf(getListOfUserUnderAccount, nrAccountID), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("cookie", fmt.Sprintf("login_service_login_newrelic_com_tokens=%s", nr.loginCookies))
+	req.Header.Add("content-type", "application/json")
+	req.Header.Add("accept", "application/json")
+
+	httpResp, err := nr.c.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer httpResp.Body.Close()
+
+	data, _ := ioutil.ReadAll(httpResp.Body)
+
+	if httpResp.StatusCode > 399 {
+		return nil, fmt.Errorf("error code %v: %s", httpResp.StatusCode, userManagementError(data))
+	}
+
+	err = json.Unmarshal(data, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
 // GetUserUnderAccount get user under specific account
 func (nr *NRClient) GetUserUnderAccount(ctx context.Context, email string, nrAccountID int64) (NRUser, error) {
 	var (
