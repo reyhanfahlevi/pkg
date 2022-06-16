@@ -1,10 +1,32 @@
 package fileparser
 
 import (
+	"bytes"
 	"io/ioutil"
+	"mime/multipart"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gocarina/gocsv"
+	"github.com/stretchr/testify/assert"
 )
+
+func setupRouter(middleware gin.HandlerFunc, routers ...func(r gin.IRoutes) gin.IRoutes) *gin.Engine {
+	r := gin.Default()
+
+	g := r.Group("/test")
+	if middleware != nil {
+		g.Use(middleware)
+	}
+	for _, router := range routers {
+		router(g)
+	}
+
+	return r
+}
 
 func TestParseJSONFile(t *testing.T) {
 	type args struct {
@@ -143,6 +165,92 @@ func TestParseCSVFile(t *testing.T) {
 			}
 
 			_ = os.RemoveAll(tt.args.filename)
+		})
+	}
+}
+
+func TestParseCSVFromGin(t *testing.T) {
+	type csv struct {
+		Test string `csv:"test"`
+	}
+
+	type args struct {
+		c        func() *gin.Context
+		fileName string
+		target   interface{}
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "Test Success",
+			args: args{
+				c: func() *gin.Context {
+					te := []csv{
+						{Test: "test"},
+					}
+					b, _ := gocsv.MarshalBytes(te)
+					buf := new(bytes.Buffer)
+					mw := multipart.NewWriter(buf)
+					w, err := mw.CreateFormFile("file", "test")
+					if assert.NoError(t, err) {
+						_, err = w.Write(b)
+						assert.NoError(t, err)
+					}
+					mw.Close()
+					c, _ := gin.CreateTestContext(httptest.NewRecorder())
+					c.Request, _ = http.NewRequest("POST", "/", buf)
+					c.Request.Header.Set("Content-Type", mw.FormDataContentType())
+					return c
+				},
+				fileName: "file",
+				target:   &[]csv{},
+			},
+			wantErr: assert.NoError,
+		}, {
+			name: "Test Failed",
+			args: args{
+				c: func() *gin.Context {
+					te := []csv{
+						{Test: "test"},
+					}
+					b, _ := gocsv.MarshalBytes(te)
+					buf := new(bytes.Buffer)
+					mw := multipart.NewWriter(buf)
+					w, err := mw.CreateFormFile("file", "test")
+					if assert.NoError(t, err) {
+						_, err = w.Write(b)
+						assert.NoError(t, err)
+					}
+					mw.Close()
+					c, _ := gin.CreateTestContext(httptest.NewRecorder())
+					c.Request, _ = http.NewRequest("POST", "/", buf)
+					c.Request.Header.Set("Content-Type", mw.FormDataContentType())
+					return c
+				},
+				fileName: "files",
+				target:   &[]csv{},
+			},
+			wantErr: assert.Error,
+		}, {
+			name: "Test Failed 2",
+			args: args{
+				c: func() *gin.Context {
+					c, _ := gin.CreateTestContext(httptest.NewRecorder())
+					c.Request, _ = http.NewRequest("POST", "/", nil)
+					return c
+				},
+				fileName: "files",
+				target:   &[]csv{},
+			},
+			wantErr: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.wantErr(t, ParseCSVFromGin(tt.args.c(), tt.args.fileName, tt.args.target))
 		})
 	}
 }
