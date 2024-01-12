@@ -215,3 +215,17 @@ func getLevel(level string) logrus.Level {
 	}
 	return logrus.ErrorLevel
 }
+
+// SetMetadataToTransaction sets the md (metadata) to transaction then return the modified context.
+// this function simplify & safer than accessing to the newrelic library directly.
+func SetMetadataToTransaction(ctx context.Context, md http.Header) context.Context {
+	if app == nil {
+		return ctx
+	}
+	txn := newrelic.FromContext(ctx)
+	if txn == nil {
+		return ctx
+	}
+	txn.AcceptDistributedTraceHeaders(newrelic.TransportOther, md)
+	return newrelic.NewContext(ctx, txn)
+}

@@ -4,6 +4,7 @@ package tracer
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/reyhanfahlevi/pkg/go/tracer/nr"
@@ -103,4 +104,50 @@ func WithSQLSpanWithName(dbName, dbHost, dbPort, query string, param map[string]
 		},
 		ExtraParam: param,
 	}
+}
+
+// WithRedisSpan returns Options for Redis
+func WithRedisSpan(command, key string, param map[string]interface{}) Options {
+	return WithRedisSpanWithName("", "", "", command, key, param)
+}
+
+type redisExtraArgs struct {
+	DBConInfo
+	Command string
+	Key     string
+}
+
+// WithRedisSpanWithName returns Options for Redis
+func WithRedisSpanWithName(redisName, redisHost, port, command, key string, param map[string]interface{}) Options {
+	return Options{
+		SpanType: SpanTypeRedis,
+		ExtraArgs: redisExtraArgs{
+			DBConInfo: DBConInfo{
+				Name: redisName,
+				Host: redisHost,
+				Port: port,
+			},
+			Command: command,
+			Key:     key,
+		},
+		ExtraParam: param,
+	}
+}
+
+func (s *Span) StartGoroutineBackground(name string) (Transaction, context.Context) {
+	return startGoroutineSpan(context.Background(), s.md, name)
+}
+
+func (s *Span) StartGoroutineWithContext(ctx context.Context, name string) (Transaction, context.Context) {
+	return startGoroutineSpan(ctx, s.md, name)
+}
+
+func startGoroutineSpan(ctx context.Context, md http.Header, name string) (Transaction, context.Context) {
+	var t Transaction
+
+	ctx = nr.StartTransactionWithName(ctx, "goroutine/"+name)
+	ctx = nr.SetMetadataToTransaction(ctx, md)
+	t.ctx = ctx
+	t.md = md
+	return t, ctx
 }
