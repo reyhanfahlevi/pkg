@@ -79,6 +79,17 @@ func StartExternalSpanFromContext(ctx context.Context, name string, opt Options)
 	return span, ctx
 }
 
+// StartGoroutineSpanFromContext create and start an opentracing and newrelic goroutine span from context
+func StartGoroutineSpanFromContext(ctx context.Context, name string) (Span, context.Context) {
+	var span Span
+
+	span.nrSegment, ctx = nr.StartGoroutineSegment(ctx, name)
+	span.ctx = ctx
+	span.md = nr.GetMetadataFromContext(ctx)
+
+	return span, ctx
+}
+
 // WithSQLSpan returns Options for SQL
 func WithSQLSpan(query string, param map[string]interface{}) Options {
 	return WithSQLSpanWithName("", "", "", query, param)

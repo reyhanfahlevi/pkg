@@ -229,3 +229,19 @@ func SetMetadataToTransaction(ctx context.Context, md http.Header) context.Conte
 	txn.AcceptDistributedTraceHeaders(newrelic.TransportOther, md)
 	return newrelic.NewContext(ctx, txn)
 }
+
+// StartGoroutineSegment to start a segment that called using goroutine / async
+func StartGoroutineSegment(ctx context.Context, name string) (*newrelic.Segment, context.Context) {
+	if app == nil {
+		return nil, nil
+	}
+
+	txn := newrelic.FromContext(ctx)
+
+	newTxn := txn.NewGoroutine()
+	seg := newTxn.StartSegment(name)
+
+	ctx = newrelic.NewContext(ctx, newTxn)
+
+	return seg, ctx
+}
